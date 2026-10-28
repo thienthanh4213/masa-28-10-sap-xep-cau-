@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>並べ替え問題 – Masa 10月28日</title>
+<style>
+:root{
+  --bg:#f6f4ef; --card:#ffffff; --ink:#1f2328; --muted:#6b7078; --line:#e3dfd6;
+  --accent:#1f5f99; --accent-soft:#e6eef7; --chip:#fff; --chip-line:#cfd6df;
+  --ok:#1d7a46; --ok-soft:#e3f3ea; --bad:#b3261e; --bad-soft:#fbe7e5; --hint:#8a5a00; --hint-soft:#fff3d6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16181c; --card:#1f2228; --ink:#e8e9eb; --muted:#9aa0a8; --line:#2f333a;
+    --accent:#7fb2e6; --accent-soft:#22303f; --chip:#262a31; --chip-line:#3a404a;
+    --ok:#6cc893; --ok-soft:#1d3127; --bad:#f08a82; --bad-soft:#3a2222; --hint:#e8c06a; --hint-soft:#3a3120;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+header h1{font-size:1.35rem;margin:0 0 2px}
+header p{margin:0;color:var(--muted);font-size:.92rem}
+.bar{display:flex;align-items:center;gap:12px;margin:18px 0 10px;flex-wrap:wrap}
+.progress{flex:1;min-width:160px;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.progress>i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+.score{font-weight:600;font-size:.95rem;white-space:nowrap}
+select{font:inherit;font-size:.9rem;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);max-width:100%}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 16px}
+.dot{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-size:.8rem;cursor:pointer;padding:0}
+.dot.cur{border-color:var(--accent);color:var(--accent);font-weight:700}
+.dot.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.dot.shown{background:var(--hint-soft);border-color:var(--hint);color:var(--hint)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 18px}
+.tag{display:inline-block;font-size:.78rem;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:3px 10px;border-radius:99px}
+.form{font-size:.85rem;color:var(--muted);font-style:italic;margin-top:6px}
+.vi{font-size:1.15rem;font-weight:600;margin:14px 0 16px}
+.num{color:var(--muted);font-weight:500;margin-right:4px}
+.answer{min-height:58px;border:2px dashed var(--chip-line);border-radius:12px;padding:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;transition:border-color .2s,background .2s}
+.answer.ok{border-style:solid;border-color:var(--ok);background:var(--ok-soft)}
+.answer.bad{border-style:solid;border-color:var(--bad);background:var(--bad-soft)}
+.answer .ph{color:var(--muted);font-size:.9rem;padding:0 6px}
+.bank{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;min-height:44px}
+.chip{font:inherit;font-size:1rem;padding:7px 12px;border-radius:10px;border:1px solid var(--chip-line);background:var(--chip);color:var(--ink);cursor:pointer;box-shadow:0 1px 0 var(--chip-line);user-select:none}
+.chip:hover{border-color:var(--accent)}
+.chip.used{visibility:hidden}
+.answer .chip{background:var(--accent-soft);border-color:transparent}
+.answer .chip.fixed{background:var(--hint-soft);color:var(--hint);cursor:default}
+.answer .chip.wrong{background:var(--bad-soft);color:var(--bad)}
+.punct{font-size:1.2rem;font-weight:700;color:var(--muted)}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+button.b{font:inherit;font-size:.92rem;padding:8px 14px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.b.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) button.b.pri{color:#10151b}}
+button.b:disabled{opacity:.45;cursor:default}
+.msg{margin-top:14px;font-size:.95rem;min-height:1.4em}
+.msg.ok{color:var(--ok);font-weight:600}
+.msg.bad{color:var(--bad)}
+.msg.show{color:var(--hint)}
+.nav{display:flex;justify-content:space-between;margin-top:16px;gap:8px}
+.done{display:none;text-align:center;padding:28px 18px}
+.done h2{margin:0 0 6px}
+@media (max-width:480px){.vi{font-size:1.05rem}.chip{font-size:.95rem;padding:6px 10px}}
+</style>
+<style>body,button,select{font-family:"Yu Gothic","Hiragino Kaku Gothic ProN","Noto Sans JP",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>単語を並べ替えて英文を作ろう</h1>
+    <p>1-1 Masa 英会話 · 10月28日（水）の復習 · 全12構文・36問</p>
+  </header>
+
+  <div class="bar">
+    <div class="progress"><i id="pbar"></i></div>
+    <div class="score" id="score">0 / 36</div>
+    <select id="filter" aria-label="構文を選ぶ"></select>
+  </div>
+  <div class="dots" id="dots"></div>
+
+  <div class="card" id="card">
+    <span class="tag" id="tag"></span>
+    <div class="form" id="form"></div>
+    <div class="vi"><span class="num" id="num"></span><span id="vi"></span></div>
+    <div class="answer" id="answer"></div>
+    <div class="bank" id="bank"></div>
+    <div class="btns">
+      <button class="b pri" id="check">答え合わせ</button>
+      <button class="b" id="hint">ヒント（1語）</button>
+      <button class="b" id="reset">やり直す</button>
+      <button class="b" id="show">答えを見る</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="nav">
+      <button class="b" id="prev">← 前の問題</button>
+      <button class="b" id="next">次の問題 →</button>
+    </div>
+  </div>
+
+  <div class="card done" id="done">
+    <h2>おつかれさまでした！🎉</h2>
+    <p id="doneText"></p>
+    <button class="b pri" id="restart">最初からやり直す</button>
+  </div>
+</div>
+
+<script>
+const S=[["外見をたずねる", "What does + 人 + look like?", [["彼女はどんな外見ですか。", "What does she look like?"], ["あなたのお兄さんはどんな外見ですか。", "What does your brother look like?"], ["その新しい先生はどんな外見ですか。", "What does the new teacher look like?"]]], ["〜に見える", "S + look(s) + 形容詞", [["彼女は親しみやすそうに見えます。", "She looks friendly."], ["彼は今日とても疲れて見えます。", "He looks very tired today."], ["そのカレーはおいしそうに見えます。", "The curry looks delicious."]]], ["〜させる", "make + 人 + 動詞の原形", [["彼らは毎日彼を笑顔にさせます。", "They make him smile every day."], ["その映画は私を泣かせました。", "The film made me cry."], ["生徒たちは私を幸せな気持ちにさせてくれます。", "My students make me feel happy."]]], ["時間をかける", "spend + 時間 + V-ing", [["彼はパンを作るのに2時間かけます。", "He spends two hours making his bread."], ["私は宿題を終えるのに1時間かけます。", "I spend one hour finishing my homework."], ["彼女は毎朝30分走ります。", "She spends thirty minutes running every morning."]]], ["〜し終える", "finish + V-ing", [["私は午後6時に勉強を終えます。", "I finish studying at six."], ["彼はまだ朝ごはんを食べ終えていません。", "He has not finished eating breakfast yet.", ["He hasn't finished eating breakfast yet."]], ["私たちは7時に働き終えました。", "We finished working at seven."]]], ["〜より上手に", "S + 動詞 + better than + 人", [["彼は私より運転が上手です。", "He drives better than me."], ["彼女は私より料理が上手です。", "She cooks better than me."], ["あなたは私より英語を話すのが上手です。", "You speak English better than me."]]], ["頻度の副詞", "一般動詞の前 · be動詞の後ろ", [["私は母の手料理がいつも大好きです。", "I always love my mum's cooking."], ["彼は朝いつも忙しいです。", "He is always busy in the morning."], ["私は日曜日はめったに働きません。", "I rarely work on Sunday."]]], ["〜と同じ", "the same as + 人 / もの", [["私の意見は彼女のと同じです。", "My opinion is the same as hers."], ["私の予定は彼のとまったく同じです。", "My schedule is exactly the same as his."], ["この味は家で作るのと同じです。", "This taste is the same as at home."]]], ["〜する日", "名詞（日・時）+ when + S + V", [["日曜日はスマホを使わない日です。", "Sunday is a day when you don't use the phone."], ["月曜日は在宅で働く日です。", "Monday is a day when I work from home."], ["土曜日は家族に会う日です。", "Saturday is a day when I meet my family."]]], ["時間がかかる", "It takes + 人 + 時間 + to V", [["時間がかかりましたか。", "Did it take you a long time?"], ["半年くらいかかりました。", "It took me about six months."], ["会社に行くのに1時間かかります。", "It takes me one hour to get to the office."]]], ["卒業研究とアンケート", "do a survey for + N", [["卒業研究のためにアンケート調査をする必要がありましたか。", "Did you need to do a survey for your final project?"], ["私のアンケートには50人の参加者がいました。", "I had fifty participants in my survey."], ["私は卒業前の最終学年にそれをしました。", "I did it in the final year before graduation."]]], ["体調を言う", "have a cold · feel tired", [["今日は風邪をひいています。", "I have a cold today."], ["とても疲れているので朝ごはんが食べられません。", "I can't have breakfast because I feel very tired."], ["母が私の一番好きな料理、つまりカレーを作ってくれました。", "My mum made my favourite dish, which is curry."]]]];
+const KEEP=new Set(["I", "I'm", "Masa", "Tokyo", "Kyoto", "Sunday", "Monday", "Saturday", "English", "What", "Did", "Does", "My", "He", "She", "They", "We", "You", "It", "The", "This", "Her", "His"]);
+const Q=[];
+S.forEach((g,gi)=>g[2].forEach(q=>{
+  const m=q[1].match(/^(.*?)([.?!])$/);
+  const body=m?m[1]:q[1], end=m?m[2]:'';
+  const words=body.split(' ');
+  const alts=[body,...(q[2]||[]).map(a=>a.replace(/[.?!]$/,''))].map(a=>a.toLowerCase().split(' ').join(' '));
+  Q.push({g:gi,name:g[0],form:g[1],vi:q[0],full:q[1],words,end,alts});
+}));
+const state=Q.map(()=>({placed:[],status:'',order:null,fixed:0}));
+let cur=0, filterG=-1;
+const $=id=>document.getElementById(id);
+
+function shuffle(n){
+  let a;
+  do{a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
+  while(n>2&&a.every((v,i)=>v===i));
+  return a;
+}
+function disp(q,i){const w=q.words[i];return (i===0&&!KEEP.has(w))?w.charAt(0).toLowerCase()+w.slice(1):w}
+function visible(){return Q.map((q,i)=>i).filter(i=>filterG<0||Q[i].g===filterG)}
+
+function render(){
+  const q=Q[cur], st=state[cur];
+  if(!st.order) st.order=shuffle(q.words.length);
+  $('tag').textContent=(q.g+1)+'. '+q.name;
+  $('form').textContent=q.form;
+  $('num').textContent=(cur+1)+'.';
+  $('vi').textContent=q.vi;
+  const ans=$('answer'), bank=$('bank');
+  ans.className='answer'+(st.status==='ok'||st.status==='shown'?' ok':st.status==='bad'?' bad':'');
+  ans.innerHTML='';
+  if(!st.placed.length) ans.innerHTML='<span class="ph">下の単語をタップして英文を作ってください…</span>';
+  st.placed.forEach((wi,pos)=>{
+    const c=document.createElement('button');c.className='chip';c.textContent=disp(q,wi);
+    if(pos<st.fixed) c.classList.add('fixed');
+    if(st.status==='bad'&&st.wrongFrom!=null&&pos>=st.wrongFrom) c.classList.add('wrong');
+    const locked=st.status==='ok'||st.status==='shown';
+    c.onclick=()=>{ if(locked||pos<st.fixed) return; st.placed.splice(pos,1); st.status=''; render(); };
+    ans.appendChild(c);
+  });
+  if(st.placed.length===q.words.length&&q.end){const p=document.createElement('span');p.className='punct';p.textContent=q.end;ans.appendChild(p)}
+  bank.innerHTML='';
+  st.order.forEach(wi=>{
+    const c=document.createElement('button');c.className='chip';c.textContent=disp(q,wi);
+    if(st.placed.includes(wi)) c.classList.add('used');
+    c.onclick=()=>{ if(st.status==='ok'||st.status==='shown') return; st.placed.push(wi); st.status=''; render(); if(st.placed.length===q.words.length) check(); };
+    bank.appendChild(c);
+  });
+  const locked=st.status==='ok'||st.status==='shown';
+  ['check','hint','show'].forEach(id=>$(id).disabled=locked);
+  const msg=$('msg');
+  msg.className='msg'+(st.status?' '+st.status:'');
+  msg.textContent=st.status==='ok'?'✔ 正解！ '+q.full:st.status==='shown'?'答え: '+q.full:st.status==='bad'?(st.placed.length<q.words.length?'まだ単語が足りません。続けてください。':'✘ まちがいです。赤い単語をもう一度並べ替えてください。'):'';
+  const v=visible(), k=v.indexOf(cur);
+  $('prev').disabled=k<=0; $('next').textContent=k>=v.length-1?'結果を見る →':'次の問題 →';
+  dots(); stats();
+}
+function sentence(st,q){return st.placed.map(i=>q.words[i]).join(' ').toLowerCase()}
+function check(){
+  const q=Q[cur], st=state[cur];
+  if(st.placed.length<q.words.length){st.status='bad';st.wrongFrom=null;render();return}
+  const s=sentence(st,q);
+  if(q.alts.includes(s)){st.status='ok'}
+  else{
+    st.status='bad';
+    const tgt=q.words.map(w=>w.toLowerCase()), got=st.placed.map(i=>q.words[i].toLowerCase());
+    let k=0;while(k<got.length&&got[k]===tgt[k])k++; st.wrongFrom=k;
+  }
+  render();
+}
+function hint(){
+  const q=Q[cur], st=state[cur];
+  const tgt=q.words.map(w=>w.toLowerCase()), got=st.placed.map(i=>q.words[i].toLowerCase());
+  let k=0;while(k<got.length&&got[k]===tgt[k])k++;
+  const keep=st.placed.slice(0,k);
+  const need=tgt[k]; if(need==null) return;
+  const wi=q.words.findIndex((w,i)=>w.toLowerCase()===need&&!keep.includes(i));
+  st.placed=[...keep,wi]; st.fixed=Math.max(st.fixed,k+1); st.status='';
+  render(); if(st.placed.length===q.words.length) check();
+}
+function stats(){
+  const v=visible();
+  const ok=v.filter(i=>state[i].status==='ok').length;
+  $('score').textContent=ok+' / '+v.length+' 正解';
+  const doneN=v.filter(i=>state[i].status==='ok'||state[i].status==='shown').length;
+  $('pbar').style.width=(doneN/v.length*100)+'%';
+}
+function dots(){
+  const d=$('dots');d.innerHTML='';
+  visible().forEach(i=>{
+    const b=document.createElement('button');b.className='dot'+(i===cur?' cur':'')+(state[i].status==='ok'?' ok':state[i].status==='shown'?' shown':'');
+    b.textContent=i+1;b.onclick=()=>{cur=i;showCard();render()};d.appendChild(b);
+  });
+}
+function showCard(){$('card').style.display='';$('done').style.display='none'}
+function finish(){
+  const v=visible(), ok=v.filter(i=>state[i].status==='ok').length, sh=v.filter(i=>state[i].status==='shown').length;
+  $('card').style.display='none';$('done').style.display='block';
+  $('doneText').textContent=`自力で正解 ${ok}/${v.length} 問`+(sh?` · 答えを見た問題 ${sh} 問`:'')+`。未回答 ${v.length-ok-sh} 問。`;
+  dots();
+}
+$('check').onclick=check;
+$('hint').onclick=hint;
+$('reset').onclick=()=>{const st=state[cur];st.placed=[];st.fixed=0;st.status='';st.order=shuffle(Q[cur].words.length);render()};
+$('show').onclick=()=>{const q=Q[cur],st=state[cur];st.placed=q.words.map((w,i)=>i);st.fixed=0;st.status='shown';render()};
+$('prev').onclick=()=>{const v=visible(),k=v.indexOf(cur);if(k>0){cur=v[k-1];render()}};
+$('next').onclick=()=>{const v=visible(),k=v.indexOf(cur);if(k<v.length-1){cur=v[k+1];render()}else finish()};
+$('restart').onclick=()=>{visible().forEach(i=>state[i]={placed:[],status:'',order:null,fixed:0});cur=visible()[0];showCard();render()};
+const f=$('filter');
+f.innerHTML='<option value="-1">すべての構文（36問）</option>'+S.map((g,i)=>`<option value="${i}">${i+1}. ${g[0]}</option>`).join('');
+f.onchange=()=>{filterG=+f.value;cur=visible()[0];showCard();render()};
+render();
+</script>
+</body>
+</html>
